@@ -1,5 +1,5 @@
 #Import ettigim kutuphaneler.
-import os, re, string, requests, random, time, telegram, logging, json
+import os, re, string, logging, requests, random, time, telegram, json
 import youtube_dl, wikipedia, wolframalpha
 import urllib.request
 from difflib import SequenceMatcher
@@ -28,57 +28,8 @@ random_take=5
 max_mahrem=20
 ####################################################################
 
-class SourceFunctions:
-  #YoutubeAPI ile video süresini dakika cinsinden kontrol ettigimiz fonksiyon.
-  def checkTime(id):
-    #Video bulunuyor
-    search_url = f'https://www.googleapis.com/youtube/v3/videos?id={id}&key={yt_key}&part=contentDetails'
-    #Adresten response cekiliyor
-    req = urllib.request.Request(search_url)
-    response = urllib.request.urlopen(req).read().decode('utf-8')
-    #json a parse ediliyor
-    data = json.loads(response)
-    #gelen veride items node una gidiliyor
-    all_data = data['items']
-    #items altindan duration cekiliyor gelen veri PT2H43M6S, saat yoksa PT25M13S gibi de gelebiliyor, asagida bu veriyi parse ediyorum
-    duration = all_data[0]['contentDetails']['duration']
-    hours = 0
-    mins = 0
-    secs = 0
-    if "H" in duration:
-      vid_time= duration.split("PT")
-      op = vid_time[1].split("H")
-      hours=int(op[0])
-      if "M" in op[1]:
-        op = op[1].split("M")
-        mins = int(op[0])
-      if "S" in op[1]:
-        op = op[1].split("S")
-        secs=int(op[0])
-    elif "M" in duration:
-      vid_time= duration.split("PT")
-      op=vid_time[1].split("M")
-      mins=int(op[0])
-      if "S" in op[1]:
-        op = op[1].split("S")
-        secs=int(op[0])
-    elif "S" in duration:
-      vid_time = duration.split("PT")
-      op = vid_time[1].split("S")
-      secs= int(op[0])
-    #dakika cinsinden verinin son halini aliyorum
-    total_mins=(hours*60)+mins+(secs/60)
-    print(str(total_mins)+" dakika uzunlugunda video talep edildi.")
-    return total_mins
-  #############################################################
-
-  #Iki string arasindaki benzerlik oranini bulan fonksiyon.
-  def similar(a, b):
-      return SequenceMatcher(None, a, b).ratio()
-  #########################################################
-
-  #Mp3 ler icin youtube ayarlari
-  ydl_opts_mp3 = {
+#Mp3 ler icin youtube ayarlari
+ydl_opts_mp3 = {
       'format': 'bestaudio/best',
       'outtmpl': "./%(id)s.%(ext)s",
       'postprocessors': [{
@@ -87,23 +38,17 @@ class SourceFunctions:
           'preferredquality': '192',
       }],
   }  
-  #Mp4 ler icin youtube ayarlari
-  ydl_opts_video = {
+#Mp4 ler icin youtube ayarlari
+ydl_opts_video = {
     'format': 'mp4',
     'outtmpl': "./%(id)s.%(ext)s",
   }
-  ###################################
+###################################
 
-  #Indirilen dosyalari yolladiktan sonra silmek icin bir fonksiyon
-  def removeFile(path):
-      os.remove(path)   
-  ###############################################
-
-
+class SourceFunctions:
   #Loglama konfigurasyonu
   logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
   logger = logging.getLogger(__name__)
-
 
   #/start komutu, öylesine merhaba diye cevap veriyor
   def start(update, context):
@@ -372,7 +317,56 @@ class SourceFunctions:
       pass
   #########################################################################  
 
-  #Hatalari loglama fonksiyonu
-  def error(update, context):
-      logger.warning('Güncelleme "%s" hataya sebebiyet verdi "%s"', update, context.error)
-  ############################
+
+#YoutubeAPI ile video süresini dakika cinsinden kontrol ettigimiz fonksiyon.
+def checkTime(id):
+  #Video bulunuyor
+  search_url = f'https://www.googleapis.com/youtube/v3/videos?id={id}&key={yt_key}&part=contentDetails'
+  #Adresten response cekiliyor
+  req = urllib.request.Request(search_url)
+  response = urllib.request.urlopen(req).read().decode('utf-8')
+  #json a parse ediliyor
+  data = json.loads(response)
+  #gelen veride items node una gidiliyor
+  all_data = data['items']
+  #items altindan duration cekiliyor gelen veri PT2H43M6S, saat yoksa PT25M13S gibi de gelebiliyor, asagida bu veriyi parse ediyorum
+  duration = all_data[0]['contentDetails']['duration']
+  hours = 0
+  mins = 0
+  secs = 0
+  if "H" in duration:
+    vid_time= duration.split("PT")
+    op = vid_time[1].split("H")
+    hours=int(op[0])
+    if "M" in op[1]:
+      op = op[1].split("M")
+      mins = int(op[0])
+    if "S" in op[1]:
+      op = op[1].split("S")
+      secs=int(op[0])
+  elif "M" in duration:
+    vid_time= duration.split("PT")
+    op=vid_time[1].split("M")
+    mins=int(op[0])
+    if "S" in op[1]:
+      op = op[1].split("S")
+      secs=int(op[0])
+  elif "S" in duration:
+    vid_time = duration.split("PT")
+    op = vid_time[1].split("S")
+    secs= int(op[0])
+  #dakika cinsinden verinin son halini aliyorum
+  total_mins=(hours*60)+mins+(secs/60)
+  print(str(total_mins)+" dakika uzunlugunda video talep edildi.")
+  return total_mins
+#############################################################
+
+#Iki string arasindaki benzerlik oranini bulan fonksiyon.
+def similar(a, b):
+  return SequenceMatcher(None, a, b).ratio()
+#########################################################
+
+#Indirilen dosyalari yolladiktan sonra silmek icin bir fonksiyon
+def removeFile(path):
+  os.remove(path)   
+###############################################

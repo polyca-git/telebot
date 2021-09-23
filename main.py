@@ -1,10 +1,15 @@
-import os
+import os, logger
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from sources import SourceFunctions
 #Buraya Telegram Tokeni girin
 telegram_token = os.environ['TELE-TOKEN']
 ###################################################################
-source_classes = SourceFunctions()
+source_classes = SourceFunctions
+
+#Hatalari loglama fonksiyonu
+def error(update, context):
+  logger.warning('Güncelleme "%s" hataya sebebiyet verdi "%s"', update, context.error)
+############################
 
 #Otomatik calisan ana fonksiyon
 def main():
@@ -24,7 +29,7 @@ def main():
   #Komut disi fonksiyonlari handle etmek icin kullanilacak fonksiyonu belirt
   dp.add_handler(MessageHandler(Filters.text, source_classes.otherMessages))
   #Hatalarin paslanacagi fonksiyonu belirt
-  dp.add_error_handler(source_classes.error)
+  dp.add_error_handler(error)
   #Botu baslat
   updater.start_polling()
   updater.idle()
